@@ -3,9 +3,11 @@ import 'package:intl/intl.dart';
 import '../../models/expense.dart';
 
 class ExpenseItem extends StatelessWidget {
-  ExpenseItem({super.key, required this.expense});
+  ExpenseItem({super.key, required this.expense, this.onRemove});
 
   final Expense expense;
+  // optional callback to notify parent when expense should be removed
+  final Function(int)? onRemove;
 
   IconData get expenseIcon {
     switch (expense.category) {

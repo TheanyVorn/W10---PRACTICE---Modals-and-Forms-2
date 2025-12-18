@@ -9,31 +9,30 @@ class ExpenseForm extends StatefulWidget {
 }
 
 class _ExpenseFormState extends State<ExpenseForm> {
-  // Controller to capture the title input from the text field
   final _titleController = TextEditingController();
-  // Controller to capture the amount input from the text field
+  // controller to store the amount the user enters
   final _amountController = TextEditingController();
+  // state to track which category user selected in dropdown
+  late Category _selectedCategory = Category.food;
+  // state to store the date user selected from date picker
+  DateTime? _selectedDate;
 
   @override
   void dispose() {
     super.dispose();
-    // Clean up the title controller when the widget is disposed
     _titleController.dispose();
-    // Clean up the amount controller when the widget is disposed
+    // clean up the amount controller when we're done
     _amountController.dispose();
   }
 
   void onCreate() {
-    // 1. Get the title from the text field controller
     String title = _titleController.text;
-    // 2. Get the amount from the text field and convert to double (or 0 if invalid)
     double amount = double.tryParse(_amountController.text) ?? 0;
-    // 3. Set category (hardcoded for now)
-    Category category = Category.food;
-    // 4. Set the date to today
-    DateTime date = DateTime.now();
+    // use the category user selected from dropdown
+    Category category = _selectedCategory;
+    // use the date user selected, or today's date if none selected
+    DateTime date = _selectedDate ?? DateTime.now();
 
-    // 5. Create a new Expense object with the captured data
     Expense newExpense = Expense(
       title: title,
       amount: amount,
@@ -41,13 +40,30 @@ class _ExpenseFormState extends State<ExpenseForm> {
       category: category,
     );
 
-    // 6. Close the modal and return the new expense back to the parent widget
+    //send the new expense back to the parent screen
     Navigator.pop(context, newExpense);
   }
 
   void onCancel() {
-    // Close the modal
+    // close the modal without returning anything
     Navigator.pop(context);
+  }
+
+  // method to open date picker and get selected date
+  void _presentDatePicker() async {
+    // open the date picker and wait for user to select a date
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate ?? DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime.now(),
+    );
+    // if user selected a date, update the state
+    if (pickedDate != null) {
+      setState(() {
+        _selectedDate = pickedDate;
+      });
+    }
   }
 
   @override
@@ -57,28 +73,63 @@ class _ExpenseFormState extends State<ExpenseForm> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Title input field
           TextField(
             controller: _titleController,
             decoration: InputDecoration(label: Text("Title")),
             maxLength: 50,
           ),
-          // Amount input field - accepts decimal numbers
+          // amount field with $ symbol prefix
           TextField(
             controller: _amountController,
-            // Added prefix to display $ symbol when user enters amount
+            // shows $ symbol before user input
             decoration: InputDecoration(
               label: Text("Amount"),
-              prefix: Text("\$ "), // Shows $ symbol before the input
+              prefix: Text("\$ "), // $ symbol appears at the start
             ),
             keyboardType: TextInputType.number,
             maxLength: 50,
           ),
-          // Cancel button - closes the modal without returning anything
+          // dropdown to let user pick a category
+          DropdownButton<Category>(
+            isExpanded: true,
+            value: _selectedCategory,
+            // show all available categories in uppercase
+            items: Category.values
+                .map(
+                  (category) => DropdownMenuItem(
+                    value: category,
+                    child: Text(category.name.toUpperCase()),
+                  ),
+                )
+                .toList(),
+            // update the selected category when user picks one
+            onChanged: (Category? newCategory) {
+              if (newCategory != null) {
+                setState(() {
+                  _selectedCategory = newCategory;
+                });
+              }
+            },
+          ),
+          // date picker composed of text and icon button
+          Row(
+            children: [
+              // show the selected date or message if no date selected
+              Text(
+                _selectedDate != null
+                    ? 'Date: ${_selectedDate!.year}-${_selectedDate!.month}-${_selectedDate!.day}'
+                    : 'No date selected',
+              ),
+              IconButton(
+                // open date picker when user taps the icon
+                onPressed: _presentDatePicker,
+                icon: Icon(Icons.calendar_today),
+              ),
+            ],
+          ),
           ElevatedButton(onPressed: onCancel, child: Text("Cancel")),
           SizedBox(width: 10),
-          // Create button - closes the modal and returns the expense
-          ElevatedButton(onPressed: onCreate, child: Text("Create")),
+          ElevatedButton(onPressed: onCreate, child: Text("Save Expense")),
         ],
       ),
     );

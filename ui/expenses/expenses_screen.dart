@@ -29,21 +29,28 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   ];
 
   void onAddClicked(BuildContext context) {
-    // Show the expense form modal and listen for the returned Expense object
+    // open the expense form modal and wait for the user to create an expense
     showModalBottomSheet<Expense>(
       isScrollControlled: false,
       context: context,
       builder: (c) => Center(child: ExpenseForm()),
     ).then((expense) {
-      // Check if an expense was returned (not null) - happens when CREATE is pressed
+      // if the user pressed CREATE, we get the expense back
       if (expense != null) {
-        // Update the state to rebuild the UI with the new expense
+        // refresh the UI and add the new expense to our list
         setState(() {
-          // Add the new expense to the list
           _expenses.add(expense);
         });
       }
-      // If expense is null, the user pressed CANCEL so we do nothing
+      // if they pressed CANCEL, expense is null so nothing happens
+    });
+  }
+
+  // this method gets called when user swipes to dismiss an expense
+  void onExpenseRemoved(int index) {
+    setState(() {
+      // remove the expense from our list using its index
+      _expenses.removeAt(index);
     });
   }
 
@@ -63,9 +70,16 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       ),
       body: ListView.builder(
         itemCount: _expenses.length,
-        itemBuilder: (context, index) => ExpenseItem(expense: _expenses[index]),
+        itemBuilder: (context, index) => Dismissible(
+          // wrap the expense item so it can be swiped away
+          key: ValueKey(_expenses[index]),
+          onDismissed: (direction) {
+            // when user swipes, remove the expense from the list
+            onExpenseRemoved(index);
+          },
+          child: ExpenseItem(expense: _expenses[index]),
+        ),
       ),
     );
   }
 }
-
