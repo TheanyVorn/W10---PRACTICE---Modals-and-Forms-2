@@ -50,7 +50,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
   }
 
   // method to open date picker and get selected date
-  void _presentDatePicker() async {
+  Future<void> _presentDatePicker() async {
     // open the date picker and wait for user to select a date
     final pickedDate = await showDatePicker(
       context: context,
